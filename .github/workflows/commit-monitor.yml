@@ -8,13 +8,13 @@ on:
 
 jobs:
   check-commit-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout the monitored repository
         uses: actions/checkout@v3
         with:
           repository: vercel/next.js # 監視対象のリポジトリ
-          ref: main # 対象ブランチ
+          ref: canary # 対象ブランチ
 
       - name: Check for changes in docs/
         id: check_changes
@@ -25,13 +25,13 @@ jobs:
 
           echo "Last commit files: $CHANGED_FILES"
           if echo "$CHANGED_FILES" | grep -q '^docs/'; then
-            echo "::set-output name=docs_changed::true"
+            echo "docs_changed=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=docs_changed::false"
+            echo "docs_changed=false" >> $GITHUB_ENV
           fi
 
       - name: Notify Slack if changes detected
-        if: steps.check_changes.outputs.docs_changed == 'true'
+        if: env.docs_changed == 'true'
         uses: slackapi/slack-github-action@v1.23.0
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
