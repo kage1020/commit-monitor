@@ -2,9 +2,8 @@ name: Monitor Commits
 
 on:
   schedule:
-    # 1時間ごとに実行
     - cron: "0 * * * *"
-  workflow_dispatch: # 手動でのトリガーも可能
+  workflow_dispatch:
 
 jobs:
   check-commit-changes:
@@ -13,17 +12,38 @@ jobs:
       - name: Checkout the monitored repository
         uses: actions/checkout@v3
         with:
-          repository: vercel/next.js # 監視対象のリポジトリ
-          ref: canary # 対象ブランチ
+          repository: vercel/next.js
+          ref: canary
+          fetch-depth: 0
+
+      - name: Load the last checked commit
+        id: load_last_commit
+        run: |
+          # 前回のコミットSHAを保存するファイル
+          COMMIT_FILE=".last_checked_commit"
+
+          # ファイルが存在する場合は基準SHAを読み込む
+          if [ -f "$COMMIT_FILE" ]; then
+            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE)
+          else
+            # 初回実行時はHEADの初期SHAを基準とする
+            LAST_CHECKED_COMMIT=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          echo "Last checked commit: $LAST_CHECKED_COMMIT"
+          echo "last_checked_commit=$LAST_CHECKED_COMMIT" >> $GITHUB_ENV
 
       - name: Check for changes in docs/
         id: check_changes
         run: |
-          git fetch
-          LAST_COMMIT=$(git rev-parse HEAD)
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $LAST_COMMIT)
+          # 最新のコミットSHAを取得
+          LATEST_COMMIT=$(git rev-parse HEAD)
 
-          echo "Last commit files: $CHANGED_FILES"
+          # 差分を計算
+          CHANGED_FILES=$(git diff --name-only ${{ env.last_checked_commit }} $LATEST_COMMIT)
+
+          echo "Changed files: $CHANGED_FILES"
+          echo "commit_sha=$LATEST_COMMIT" >> $GITHUB_ENV
           if echo "$CHANGED_FILES" | grep -q '^docs/'; then
             echo "docs_changed=true" >> $GITHUB_ENV
           else
@@ -31,7 +51,7 @@ jobs:
           fi
 
       - name: Notify Slack if changes detected
-        if: env.docs_changed == 'true'
+        if: ${{ env.docs_changed == 'true' }}
         uses: slackapi/slack-github-action@v1.23.0
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
@@ -40,8 +60,15 @@ jobs:
               "text": "Changes detected in the 'docs/' directory of 'vercel/next.js'",
               "attachments": [
                 {
-                  "text": "Check the latest commit: https://github.com/vercel/next.js/commit/${{ github.sha }}",
+                  "text": "Check the changes here: https://github.com/vercel/next.js/compare/${{ env.last_checked_commit }}...${{ env.commit_sha }}",
                   "color": "#36a64f"
                 }
               ]
             }
+
+      - name: Save the latest commit as the new baseline
+        if: ${{ env.docs_changed == 'true' || true }}
+        run: |
+          # 基準となる最新コミットSHAを保存
+          echo "${{ env.commit_sha }}" > .last_checked_commit
+          echo "New baseline commit: ${{ env.commit_sha }}"
