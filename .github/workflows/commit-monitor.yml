@@ -24,6 +24,7 @@ jobs:
 
           # ファイルが存在する場合は基準SHAを読み込む
           if [ -f "$COMMIT_FILE" ]; then
+            echo "Last Checked Commit Loaded"
             LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE)
           else
             # 初回実行時はHEADの最新SHAを基準とする
