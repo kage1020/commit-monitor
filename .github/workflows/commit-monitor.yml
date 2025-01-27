@@ -24,7 +24,7 @@ jobs:
 
           # ファイルが存在する場合は基準SHAを読み込む
           if [ -f "$COMMIT_FILE" ]; then
-            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE)
+            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE | tr -d '\n' | tr -d '\r')
           else
             # 初回実行時はHEADの初期SHAを基準とする
             LAST_CHECKED_COMMIT=$(git rev-list --max-parents=0 HEAD)
