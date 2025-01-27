@@ -24,7 +24,7 @@ jobs:
 
           # ファイルが存在する場合は基準SHAを読み込む
           if [ -f "$COMMIT_FILE" ]; then
-            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE | tr -d '\n' | tr -d '\r')
+            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE | tr -d '\n' | tr -d ' ')
           else
             # 初回実行時はHEADの初期SHAを基準とする
             LAST_CHECKED_COMMIT=$(git rev-list --max-parents=0 HEAD)
@@ -41,6 +41,7 @@ jobs:
 
           # 差分を計算
           CHANGED_FILES=$(git diff --name-only ${{ env.last_checked_commit }} $LATEST_COMMIT)
+          CHANGED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ' ')
 
           echo "Changed files: $CHANGED_FILES"
           echo "commit_sha=$LATEST_COMMIT" >> $GITHUB_ENV
