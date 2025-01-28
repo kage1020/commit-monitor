@@ -16,21 +16,21 @@ jobs:
           ref: canary
           fetch-depth: 0
 
+      - name: Download last checked commit artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: last_checked_commit
+          path: .
+
       - name: Load the last checked commit
         id: load_last_commit
         run: |
-          # 前回のコミットSHAを保存するファイル
-          COMMIT_FILE=".last_checked_commit"
-
-          # ファイルが存在する場合は基準SHAを読み込む
-          if [ -f "$COMMIT_FILE" ]; then
-            echo "Last Checked Commit Loaded"
-            LAST_CHECKED_COMMIT=$(cat $COMMIT_FILE)
+          if [ -f .last_checked_commit ]; then
+            LAST_CHECKED_COMMIT=$(cat .last_checked_commit)
           else
-            # 初回実行時はHEADの最新SHAを基準とする
-            LAST_CHECKED_COMMIT=$(git rev-parse HEAD)
+            echo "Artifact not found. Using the initial commit."
+            LAST_CHECKED_COMMIT=$(git rev-list --max-parents=0 HEAD)
           fi
-
           echo "Last checked commit: $LAST_CHECKED_COMMIT"
           echo "last_checked_commit=$LAST_CHECKED_COMMIT" >> $GITHUB_ENV
 
@@ -52,6 +52,8 @@ jobs:
             echo "docs_changed=false" >> $GITHUB_ENV
           fi
 
+          echo "${{ env.commit_sha }}" > .last_checked_commit
+
       - name: Notify Slack if changes detected
         if: ${{ env.docs_changed == 'true' }}
         uses: slackapi/slack-github-action@v1.23.0
@@ -68,9 +70,9 @@ jobs:
               ]
             }
 
-      - name: Save the latest commit as the new baseline
+      - name: Save the latest commit as artifact
         if: ${{ env.docs_changed == 'true' || true }}
-        run: |
-          # 基準となる最新コミットSHAを保存
-          echo "${{ env.commit_sha }}" > .last_checked_commit
-          echo "New baseline commit: ${{ env.commit_sha }}"
+        uses: actions/upload-artifact@v3
+        with:
+          name: last_checked_commit
+          path: .last_checked_commit
