@@ -20,7 +20,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: last_checked_commit
-          path: .
+          path: .last_checked_commit
 
       - name: Load the last checked commit
         id: load_last_commit
