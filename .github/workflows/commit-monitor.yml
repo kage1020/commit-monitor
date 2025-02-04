@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download last checked commit artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: last_checked_commit
           path: .
@@ -73,7 +73,7 @@ jobs:
 
       - name: Save the latest commit as artifact
         if: ${{ env.docs_changed == 'true' || true }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: last_checked_commit
           path: .last_checked_commit
