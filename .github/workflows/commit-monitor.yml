@@ -20,7 +20,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: last_checked_commit
-          path: .
+          path: .last_checked_commit
         continue-on-error: true
 
       - name: Load the last checked commit
