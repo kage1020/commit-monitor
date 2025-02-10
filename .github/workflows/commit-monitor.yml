@@ -18,7 +18,7 @@ jobs:
 
       - name: Restore last checked commit from cache
         id: restore_cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v4
         with:
           path: last_checked_commit
           key: last-checked-commit
@@ -71,7 +71,7 @@ jobs:
                   text: "Changes in `docs/` detected in `vercel/next.js`"
 
       - name: Save last checked commit to cache
-        uses: actions/cache@v3
+        uses: actions/cache/save@v4
         with:
           path: last_checked_commit
           key: last-checked-commit
