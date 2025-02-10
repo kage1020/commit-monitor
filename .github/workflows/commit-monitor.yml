@@ -16,12 +16,12 @@ jobs:
           ref: canary
           fetch-depth: 0
 
-      - name: Download the last checked commit artifact
-        uses: actions/download-artifact@v4
+      - name: Restore last checked commit from cache
+        id: restore_cache
+        uses: actions/cache@v3
         with:
-          name: last_checked_commit
           path: last_checked_commit
-        continue-on-error: true
+          key: last-checked-commit
 
       - name: Load the last checked commit
         id: load_last_checked_commit
@@ -70,8 +70,8 @@ jobs:
                   type: mrkdwn
                   text: "Changes in `docs/` detected in `vercel/next.js`"
 
-      - name: Upload the last checked commit artifact
-        uses: actions/upload-artifact@v4
+      - name: Save last checked commit to cache
+        uses: actions/cache@v3
         with:
-          name: last_checked_commit
           path: last_checked_commit
+          key: last-checked-commit
