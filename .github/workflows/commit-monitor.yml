@@ -16,7 +16,7 @@ jobs:
           ref: canary
           fetch-depth: 0
 
-      - name: Download last checked commit artifact
+      - name: Download the last checked commit artifact
         uses: actions/download-artifact@v4
         with:
           name: last_checked_commit
@@ -24,55 +24,52 @@ jobs:
         continue-on-error: true
 
       - name: Load the last checked commit
-        id: load_last_commit
+        id: load_last_checked_commit
         run: |
-          if [ -f last_checked_commit/last_checked_commit ]; then
-            LAST_CHECKED_COMMIT=$(cat last_checked_commit/last_checked_commit)
+          if [ -f last_checked_commit/commit ]; then
+            LAST_CHECKED_COMMIT=$(cat last_checked_commit/commit)
           else
-            echo "Artifact not found. Using the latest commit."
             LAST_CHECKED_COMMIT=$(git rev-parse HEAD)
           fi
+
           echo "Last checked commit: $LAST_CHECKED_COMMIT"
           echo "LAST_CHECKED_COMMIT=$LAST_CHECKED_COMMIT" >> $GITHUB_ENV
 
       - name: Check for changes in docs/
-        id: check_changes
+        id: check_docs_changes
         run: |
-          # 最新のコミットSHAを取得
           LATEST_COMMIT=$(git rev-parse HEAD)
+          echo "Latest commit: $LATEST_COMMIT"
 
-          # 差分を計算
           CHANGED_FILES=$(git diff --name-only $LAST_CHECKED_COMMIT $LATEST_COMMIT)
-          CHANGED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ' ')
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
 
-          echo "Changed files: $CHANGED_FILES"
-          echo "COMMIT_SHA=$LATEST_COMMIT" >> $GITHUB_ENV
-          if echo "$CHANGED_FILES" | grep -q '^docs/'; then
+          if echo "$CHANGED_FILES" | grep -q "^docs/"; then
+            echo "Changes in docs/ detected"
             echo "DOCS_CHANGED=true" >> $GITHUB_ENV
           else
+            echo "No changes in docs/ detected"
             echo "DOCS_CHANGED=false" >> $GITHUB_ENV
           fi
 
-          echo $COMMIT_SHA > last_checked_commit/last_checked_commit
+          echo "$LATEST_COMMIT" > last_checked_commit/commit
 
-      - name: Notify Slack if changes detected
-        if: ${{ env.DOCS_CHANGED == 'true' }}
-        uses: slackapi/slack-github-action@v1.23.0
+      - name: Notify Slack if docs/ changed
+        if: env.DOCS_CHANGED == 'true'
+        uses: slackapi/slack-github-action@v2.0.0
         with:
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          webhook: ${{ secrets.SLACK_WEBHOOK }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "text": "Changes detected in the 'docs/' directory of 'vercel/next.js'",
-              "attachments": [
-                {
-                  "text": "Check the changes here: https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.COMMIT_SHA }}",
-                  "color": "#36a64f"
-                }
-              ]
-            }
+            text: "Changes in docs/ detected in vercel/next.js"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "Changes in `docs/` detected in `vercel/next.js`"
 
-      - name: Save the latest commit as artifact
-        if: ${{ env.DOCS_CHANGED == 'true' || true }}
+      - name: Upload the last checked commit artifact
         uses: actions/upload-artifact@v4
         with:
           name: last_checked_commit
