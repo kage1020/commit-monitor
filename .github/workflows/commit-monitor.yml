@@ -26,8 +26,8 @@ jobs:
       - name: Load the last checked commit
         id: load_last_commit
         run: |
-          if [ -f last_checked_commit ]; then
-            LAST_CHECKED_COMMIT=$(cat last_checked_commit)
+          if [ -f last_checked_commit/last_checked_commit ]; then
+            LAST_CHECKED_COMMIT=$(cat last_checked_commit/last_checked_commit)
           else
             echo "Artifact not found. Using the latest commit."
             LAST_CHECKED_COMMIT=$(git rev-parse HEAD)
