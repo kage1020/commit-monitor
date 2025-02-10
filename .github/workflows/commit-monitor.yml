@@ -53,6 +53,7 @@ jobs:
             echo "DOCS_CHANGED=false" >> $GITHUB_ENV
           fi
 
+          mkdir -p last_checked_commit
           echo "$LATEST_COMMIT" > last_checked_commit/commit
 
       - name: Notify Slack if docs/ changed
