@@ -29,11 +29,11 @@ jobs:
           if [ -f .last_checked_commit ]; then
             LAST_CHECKED_COMMIT=$(cat .last_checked_commit)
           else
-            echo "Artifact not found. Using the initial commit."
+            echo "Artifact not found. Using the latest commit."
             LAST_CHECKED_COMMIT=$(git rev-parse HEAD)
           fi
           echo "Last checked commit: $LAST_CHECKED_COMMIT"
-          echo "last_checked_commit=$LAST_CHECKED_COMMIT" >> $GITHUB_ENV
+          echo "LAST_CHECKED_COMMIT=$LAST_CHECKED_COMMIT" >> $GITHUB_ENV
 
       - name: Check for changes in docs/
         id: check_changes
@@ -42,23 +42,23 @@ jobs:
           LATEST_COMMIT=$(git rev-parse HEAD)
 
           # 差分を計算
-          CHANGED_FILES=$(git diff --name-only ${{ env.last_checked_commit }} $LATEST_COMMIT)
+          CHANGED_FILES=$(git diff --name-only $LAST_CHECKED_COMMIT $LATEST_COMMIT)
           CHANGED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ' ')
 
           echo "Changed files: $CHANGED_FILES"
-          echo "commit_sha=$LATEST_COMMIT" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$LATEST_COMMIT" >> $GITHUB_ENV
           if echo "$CHANGED_FILES" | grep -q '^docs/'; then
-            echo "docs_changed=true" >> $GITHUB_ENV
+            echo "DOCS_CHANGED=true" >> $GITHUB_ENV
           else
-            echo "docs_changed=false" >> $GITHUB_ENV
+            echo "DOCS_CHANGED=false" >> $GITHUB_ENV
           fi
 
-          echo "$LATEST_COMMIT"
-          echo "${{ env.content }}"
-          echo "${{ env.commit_sha }}" > .last_checked_commit
+          echo $LATEST_COMMIT
+          echo $LAST_CHECKED_COMMIT
+          echo $COMMIT_SHA > .last_checked_commit
 
       - name: Notify Slack if changes detected
-        if: ${{ env.docs_changed == 'true' }}
+        if: ${{ env.DOCS_CHANGED == 'true' }}
         uses: slackapi/slack-github-action@v1.23.0
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
@@ -67,14 +67,14 @@ jobs:
               "text": "Changes detected in the 'docs/' directory of 'vercel/next.js'",
               "attachments": [
                 {
-                  "text": "Check the changes here: https://github.com/vercel/next.js/compare/${{ env.last_checked_commit }}...${{ env.commit_sha }}",
+                  "text": "Check the changes here: https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.COMMIT_SHA }}",
                   "color": "#36a64f"
                 }
               ]
             }
 
       - name: Save the latest commit as artifact
-        if: ${{ env.docs_changed == 'true' || true }}
+        if: ${{ env.DOCS_CHANGED == 'true' || true }}
         uses: actions/upload-artifact@v4
         with:
           name: last_checked_commit
