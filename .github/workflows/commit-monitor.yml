@@ -12,9 +12,6 @@ jobs:
       actions: write
       id-token: write
     steps:
-      - name: Checkout this repository
-        uses: actions/checkout@v3
-
       - name: Set up GitHub CLI
         run: |
           sudo apt update
@@ -82,6 +79,9 @@ jobs:
                 text:
                   type: mrkdwn
                   text: "Changes in `docs/` detected in `vercel/next.js`. Check it out <https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.LATEST_COMMIT }}|here>."
+
+      - name: Checkout own repository
+        uses: actions/checkout@v3
 
       - name: Delete existing cache
         run: gh cache delete last-checked-commit || echo "Cache not found"
