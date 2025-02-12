@@ -21,9 +21,6 @@ jobs:
           sudo apt install -y gh
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Delete existing cache
-        run: gh cache delete last-checked-commit || echo "Cache not found"
-
       - name: Checkout the monitored repository
         uses: actions/checkout@v3
         with:
@@ -84,7 +81,10 @@ jobs:
               - type: section
                 text:
                   type: mrkdwn
-                  text: "Changes in `docs/` detected in `vercel/next.js`. Check it out [here](https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.LATEST_COMMIT }})"
+                  text: "Changes in `docs/` detected in `vercel/next.js`. Check it out <https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.LATEST_COMMIT }}|here>."
+
+      - name: Delete existing cache
+        run: gh cache delete last-checked-commit || echo "Cache not found"
 
       - name: Save last checked commit to cache
         uses: actions/cache/save@v4
