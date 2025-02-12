@@ -16,7 +16,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y gh
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Delete existing cache
         run: gh cache delete last-checked-commit || echo "Cache not found"
@@ -67,6 +67,7 @@ jobs:
 
           mkdir -p last_checked_commit
           echo "$LATEST_COMMIT" > last_checked_commit/commit
+          echo "LATEST_COMMIT=$LATEST_COMMIT" >> $GITHUB_ENV
 
       - name: Notify Slack if docs/ changed
         if: env.DOCS_CHANGED == 'true'
@@ -80,7 +81,7 @@ jobs:
               - type: section
                 text:
                   type: mrkdwn
-                  text: "Changes in `docs/` detected in `vercel/next.js`. Check it out [here](https://github.com/vercel/next.js/compare/{{ $LAST_CHECKED_COMMIT }}...{{ $LATEST_COMMIT }})"
+                  text: "Changes in `docs/` detected in `vercel/next.js`. Check it out [here](https://github.com/vercel/next.js/compare/${{ env.LAST_CHECKED_COMMIT }}...${{ env.LATEST_COMMIT }})"
 
       - name: Save last checked commit to cache
         uses: actions/cache/save@v4
