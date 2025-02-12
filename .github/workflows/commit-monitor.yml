@@ -2,13 +2,22 @@ name: Monitor Commits
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
   check-commit-changes:
     runs-on: ubuntu-24.04
     steps:
+      - name: Set up GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Delete existing cache
+        run: gh cache delete last-checked-commit || echo "Cache not found"
+
       - name: Checkout the monitored repository
         uses: actions/checkout@v3
         with:
@@ -63,12 +72,12 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK }}
           webhook-type: incoming-webhook
           payload: |
-            text: "Changes in docs/ detected in vercel/next.js"
+            text: "Changes in docs/ detected in vercel/next.js. Check it out here: https://github.com/vercel/next.js/compare/$LAST_CHECKED_COMMIT...$LATEST_COMMIT"
             blocks:
               - type: section
                 text:
                   type: mrkdwn
-                  text: "Changes in `docs/` detected in `vercel/next.js`"
+                  text: "Changes in `docs/` detected in `vercel/next.js`. Check it out [here](https://github.com/vercel/next.js/compare/$LAST_CHECKED_COMMIT...$LATEST_COMMIT)"
 
       - name: Save last checked commit to cache
         uses: actions/cache/save@v4
