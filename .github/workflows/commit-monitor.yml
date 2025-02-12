@@ -8,6 +8,9 @@ on:
 jobs:
   check-commit-changes:
     runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      id-token: write
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v3
