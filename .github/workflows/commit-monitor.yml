@@ -87,6 +87,11 @@ jobs:
       - name: Delete existing cache
         run: gh cache delete --all || echo "Cache not found"
 
+      - name: Debug last checked commit directory
+        run: |
+          echo "Checking contents of last_checked_commit"
+          ls -la last_checked_commit || echo "Directory last_checked_commit does not exist"
+
       - name: Save last checked commit to cache
         uses: actions/cache/save@v4
         with:
