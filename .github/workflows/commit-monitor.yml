@@ -29,7 +29,7 @@ jobs:
         id: restore_cache
         uses: actions/cache/restore@v4
         with:
-          path: last_checked_commit
+          path: .
           key: last-checked-commit
 
       - name: Load the last checked commit
@@ -38,6 +38,7 @@ jobs:
           if [ -f last_checked_commit/commit ]; then
             LAST_CHECKED_COMMIT=$(cat last_checked_commit/commit)
           else
+            echo "No last checked commit found"
             LAST_CHECKED_COMMIT=$(git rev-parse HEAD)
           fi
 
@@ -84,7 +85,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Delete existing cache
-        run: gh cache delete last-checked-commit || echo "Cache not found"
+        run: gh cache delete --all || echo "Cache not found"
 
       - name: Save last checked commit to cache
         uses: actions/cache/save@v4
